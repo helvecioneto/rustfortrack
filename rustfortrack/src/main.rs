@@ -5,10 +5,13 @@
 // Import libraries
 use std::env; // Get command line arguments
 use std::fs::File; // File I/O
-use ini::Ini;
+use ini::Ini; // Read .ini files
+use std::collections::HashMap; // HashMap
 mod utils; // Import utils module
+mod track; // Import track module
+mod forecast; // Import forecast module
 
-#[allow(unused_variables)] // Allow unused variables
+//#[allow(unused_variables)] // Allow unused variables
 
 fn main() {
     // Get imput parameters from command line
@@ -39,15 +42,38 @@ fn main() {
     utils::main_bar::main_print(); // Print main bar
 
     // Read name_list file
-    let conf = Ini::load_from_file(name_list).unwrap();
+    let config_list = Ini::load_from_file(name_list).unwrap();
 
-    // iterating
-    for (sec, prop) in &conf {
-        println!("Section: {:?}", sec);
+    // Create a HashMap to store the name_list
+    let mut name_list_store: HashMap<String, String> = HashMap::new();
+
+    // Iterate over the name_list
+    for (sec, prop) in &config_list {
+        // Check if section is not equals to CONFIG
+        if sec.unwrap() != "CONFIG" {
+            // print error and exit
+            println!("Error: Section CONFIG does not exists into name_list.ini file. Founded name: {}", sec.unwrap());
+            return;
+        }
+        // Iterate over the properties
         for (key, value) in prop.iter() {
-            println!("{:?}:{:?}", key, value);
+            // Insert name in the HashMap
+            name_list_store.insert(key.to_string(), value.to_string());
+            // Print name
+            println!("{}: {}", key, value);
         }
     }
 
-
+    // Check if mode is track
+    if mode == "track" {
+        // Call track function
+        track::track_mode::track_mode(&name_list_store);
+    } else if mode == "forecast" {
+        // Call forecast function
+        forecast::forecast_mode::forecast_mode(&name_list_store);
+    } else {
+        // Print error and exit
+        println!("Error: Mode {} does not exists", mode);
+        return;
+    }
 }
