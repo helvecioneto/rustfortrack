@@ -12,12 +12,21 @@ for file in glob.glob(input_path + '*.nc'):
     # Open matrix from variable DBZc
     matrix = nc.variables['DBZc'][:].data
     # Transform nan to -9999
-    matrix = np.nan_to_num(matrix, nan=-9999)
-    # Save the matrix in binary format
-    matrix.tofile(file.replace('.nc', '.bin'))
+    # matrix = np.nan_to_num(matrix, nan=-9999)
+
+    # Get only the first 2 dimensions
+    matrix = matrix[0, 0, :, :]
 
     # Mount output path
     output_file = output_path + pathlib.Path(file).name.replace('.nc', '.bin')
 
-    # Save the matrix in binary format compressed
-    matrix.tofile(output_file, format='f4')
+    # Convert to float32
+    matrix = matrix.astype(np.float32)
+
+    # Replace nan to -9999
+    matrix[np.isnan(matrix)] = -9999
+
+    print(np.unique(matrix))
+
+    # Save the matrix in binary format f64
+    matrix.tofile(output_file, format='%f')
