@@ -14,11 +14,17 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
     let track_start = name_list_store.get("TRACK_START").unwrap();
     // Get TRACK_END and store it into a variable
     let track_end = name_list_store.get("TRACK_END").unwrap();
+    // Get TRACK_INTERVAL and store it into a variable
+    let track_interval = name_list_store.get("TRACK_INTERVAL").unwrap();
 
     // Call files_list function
     let files = files_list(data_input.to_string(), data_ext.to_string());
 
-    // Call timestamp function
-    let files_stamp = files_stamp(files);
+    // Call timestamp function to filter files
+    let filtered_files = files_stamp(files, track_start.to_string(), 
+                                  track_end.to_string(),
+                                  track_interval.to_string().parse::<i32>().unwrap());
+    println!("Filtered files: {:?}", filtered_files);
+
 
 }
