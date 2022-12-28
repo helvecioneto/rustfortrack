@@ -1,8 +1,8 @@
 use std::collections::HashMap; // HashMap
-use std::fs::File; // File
-use std::io::Read; // Read
+use chrono::NaiveDateTime;
 use crate::utils::files_list::files_list; // Import mod files_list from utils
 use crate::utils::files_timestamp::files_stamp; // Import mod files_timestamp from utils
+use crate::utils::read_bin::read_binary; // Import mod read_bin from utils
 
 pub fn track_mode(name_list_store: &HashMap<String, String>) {
     // Print track mode
@@ -31,36 +31,23 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
                                   track_end.to_string(),
                                   track_interval.to_string().parse::<i32>().unwrap());
 
+        
+    // Begin track process
+    for i in 0..filtered_files.len() {
+        // Get timestamp
+        let timestamp = filtered_files[i].split("/").last().unwrap().split(".").next().unwrap();
+        let timestamp = NaiveDateTime::parse_from_str(&timestamp, "%Y%m%d_%H%M%S").unwrap();
 
-    let first_file = filtered_files[0].clone();
-    
-    // Open file
-    let mut file = File::open(first_file).expect("Unable to open file");
-    let mut buffer = Vec::<u8>::new();
-    file.read_to_end(&mut buffer).expect("Unable to read data");
+        // Print timestamp
+        println!("Processing: {} ", timestamp);
 
-    // Create a main vector to store data
-    let mut main_vector = Vec::new();
+        // Call read_bin function
+        let data = read_binary(filtered_files[i].to_string(),
+                               data_x_dim.to_string(),
+                               data_y_dim.to_string());
 
-    for i in (0..buffer.len()).step_by(4) {
-        let mut bytes = [0; 4];
-        bytes.copy_from_slice(&buffer[i..i+4]);
-        let f = f32::from_le_bytes(bytes);
-        main_vector.push(f);
+        // Print data
+        // println!("{:?}", data);
     }
-
-    // Create a matrix of f32 with DATA_X_DIM and DATA_Y_DIM
-    let mut matrix = vec![vec![0.0; data_x_dim.to_string().parse::<usize>().unwrap()]; 
-                                    data_y_dim.to_string().parse::<usize>().unwrap()];
-    
-    // Store data into matrix
-    for i in 0..matrix.len() {
-        for j in 0..matrix[i].len() {
-            matrix[i][j] = main_vector[i * matrix[i].len() + j];
-        }
-    }
-
-    println!(" {} ", matrix[201][120]);
-
 }
 
