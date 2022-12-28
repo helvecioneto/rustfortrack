@@ -26,7 +26,7 @@ for file in glob.glob(input_path + '*.nc'):
     # Replace nan to -9999
     matrix[np.isnan(matrix)] = -9999
 
-    print(np.unique(matrix))
+    print(file, matrix[201, 120])
 
     # Save the matrix in binary format f64
     matrix.tofile(output_file, format='%f')

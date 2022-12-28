@@ -32,7 +32,7 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
                                   track_interval.to_string().parse::<i32>().unwrap());
 
 
-    let first_file = filtered_files[2].clone();
+    let first_file = filtered_files[0].clone();
     
     // Open file
     let mut file = File::open(first_file).expect("Unable to open file");
@@ -60,10 +60,7 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
         }
     }
 
-    // Print first 10 elements of matrix
-    for i in 0..10 {
-        println!("{:?}", matrix[i]);
-    }
+    println!(" {} ", matrix[201][120]);
 
 }
 
