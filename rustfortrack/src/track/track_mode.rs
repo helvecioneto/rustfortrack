@@ -4,6 +4,7 @@ use crate::utils::files_list::files_list; // Import mod files_list from utils
 use crate::utils::files_timestamp::files_stamp; // Import mod files_timestamp from utils
 use crate::utils::read_bin::read_binary; // Import mod read_bin from utils
 use crate::utils::thresholding::threshold; // Import mod threshold from utils
+use crate::utils::clustering::cluster; // Import mod clustering from utils
 
 pub fn track_mode(name_list_store: &HashMap<String, String>) {
     // Print track mode
@@ -60,6 +61,8 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
         // Call threshold function
         let threshold_data = threshold(data, clust_threshold.clone(),operator.to_string());
 
+        // Call cluster function
+        let cluster_data = cluster(threshold_data, clust_threshold.clone(), clust_minsize.clone());
     }
 }
 
