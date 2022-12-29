@@ -1,6 +1,8 @@
 use std::collections::HashMap; // HashMap
 
-pub fn forecast_mode(name_list_store: &HashMap<String, String>) {
+#[allow(unused_variables)] // Allow unused variables
+
+pub fn forecast_mode(n_list: &HashMap<String, String>) {
     // Print track mode
     println!("Forecast mode has been started");
 }

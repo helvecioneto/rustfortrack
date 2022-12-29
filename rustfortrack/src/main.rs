@@ -11,7 +11,6 @@ mod utils; // Import utils module
 mod track; // Import track module
 mod forecast; // Import forecast module
 
-//#[allow(unused_variables)] // Allow unused variables
 
 fn main() {
     // Get imput parameters from command line

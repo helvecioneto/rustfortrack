@@ -1,9 +1,9 @@
 extern crate glob;
 
-pub fn files_list(path: String, extension: String) -> Vec<String> {
+pub fn files_list(path: String) -> Vec<String> {
 
     // mount pattern
-    let pattern = format!("{}**/*{}", path, extension);
+    let pattern = format!("{}**/*{}", path, ".bin");
     // get files and add to vector
     let mut files: Vec<String> = Vec::new();
     for entry in glob::glob(&pattern).expect("Failed to read glob pattern") {

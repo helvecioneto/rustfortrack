@@ -3,6 +3,7 @@ use chrono::NaiveDateTime;
 use crate::utils::files_list::files_list; // Import mod files_list from utils
 use crate::utils::files_timestamp::files_stamp; // Import mod files_timestamp from utils
 use crate::utils::read_bin::read_binary; // Import mod read_bin from utils
+use crate::utils::thresholding::threshold; // Import mod threshold from utils
 
 pub fn track_mode(name_list_store: &HashMap<String, String>) {
     // Print track mode
@@ -10,8 +11,6 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
 
     // Get DATA_INPUT path and store it into a variable
     let data_input = name_list_store.get("DATA_INPUT").unwrap();
-    // Get DATA_EXT and store it into a variable
-    let data_ext = name_list_store.get("DATA_EXT").unwrap();
     // Get DATA_X_DIM and store it into a variable
     let data_x_dim = name_list_store.get("DATA_X_DIM").unwrap();
     // Get DATA_Y_DIM and store it into a variable
@@ -22,9 +21,21 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
     let track_end = name_list_store.get("TRACK_END").unwrap();
     // Get TRACK_INTERVAL and store it into a variable
     let track_interval = name_list_store.get("TRACK_INTERVAL").unwrap();
+    // Get CLUST_THRESHOLD and store it into a variable
+    let clust_threshold = name_list_store.get("CLUST_THRESHOLD").unwrap();
+    // Get CLUST_MINSIZE and store it into a variable
+    let clust_minsize = name_list_store.get("CLUST_MINSIZE").unwrap();
+    // Get OPERATOR and store it into a variable
+    let operator = name_list_store.get("OPERATOR").unwrap();
+
+    // Format variables
+    //Split clust_threshold into a float vector
+    let clust_threshold: Vec<f32> = clust_threshold.split(",").map(|s| s.parse().unwrap()).collect();
+    // Split clust_minsize into a int vector
+    let clust_minsize: Vec<i32> = clust_minsize.split(",").map(|s| s.parse().unwrap()).collect();
 
     // Call files_list function
-    let files = files_list(data_input.to_string(), data_ext.to_string());
+    let files = files_list(data_input.to_string());
 
     // Call timestamp function to filter files
     let filtered_files = files_stamp(files, track_start.to_string(), 
@@ -46,8 +57,9 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
                                data_x_dim.to_string(),
                                data_y_dim.to_string());
 
-        // Print data
-        // println!("{:?}", data);
+        // Call threshold function
+        let threshold_data = threshold(data, clust_threshold.clone(),operator.to_string());
+
     }
 }
 
