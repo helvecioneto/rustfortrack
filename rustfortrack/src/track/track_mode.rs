@@ -63,6 +63,9 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
 
         // Call cluster function
         let cluster_data = cluster(threshold_data, clust_threshold.clone(), clust_minsize.clone());
+
+        // Print cluster_data
+        println!("Cluster data: {:?}", cluster_data);
     }
 }
 
