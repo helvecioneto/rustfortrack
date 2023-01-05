@@ -5,6 +5,8 @@ use crate::utils::files_timestamp::files_stamp; // Import mod files_timestamp fr
 use crate::utils::read_bin::read_binary; // Import mod read_bin from utils
 use crate::utils::thresholding::threshold; // Import mod threshold from utils
 use crate::utils::clustering::cluster; // Import mod clustering from utils
+use crate::utils::vectorization::vectorize; // Import mod vectorization from utils
+
 
 pub fn track_mode(name_list_store: &HashMap<String, String>) {
     // Print track mode
@@ -64,8 +66,9 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
         // Call cluster function
         let cluster_data = cluster(threshold_data, clust_threshold.clone(), clust_minsize.clone());
 
-        // Print cluster_data
-        println!("Cluster data: {:?}", cluster_data);
+        // Call vectorize function
+        vectorize(cluster_data, clust_threshold.clone(), data_x_dim.to_string().parse::<i32>().unwrap(), data_y_dim.to_string().parse::<i32>().unwrap());
+
     }
 }
 
