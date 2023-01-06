@@ -1,71 +1,140 @@
-use ndarray::{Array2};
-use petal_neighbors::distance::Euclidean;
-use petal_clustering::{Dbscan, Fit};
+use image;
+// use imageproc;
+use opencv::{
+    prelude::*,
+    // imgcodecs,
+    imgproc,
+    core,
+};
 
-pub fn cluster(points : Vec<Vec<f32>>, clust_threshold: Vec<f32>, clust_minsize : Vec<i32>) -> Vec<Vec<f32>>{
+pub fn cluster(_data : Vec<Vec<f32>>, data_x_dim : i32, data_y_dim : i32, _clust_threshold: Vec<f32>, _clust_minsize : Vec<i32>, _operator : String) {
 
-    // Get Threshold Level Vector
-    let thld_vec = points[0].clone();
-    // Get X Vector
-    let x_vec = points[1].clone();
-    // Get Y Vector
-    let y_vec = points[2].clone();
-    // Get Value Vector
-    let val_vec = points[3].clone();
-
-    // Set epsilon value for clustering
-    let eps = 1.5;
-    // Set min points for clustering
-    let min_pts = 3;
-
-    // Create a object for Dbscan
-    let mut clustering = Dbscan::new(eps,min_pts, Euclidean::default());
-
-    // Create new array with the difference of rows
-    let mut output_matrix : Vec<Vec<f32>> = Vec::new();
-
-    // Loop through clust_threshold vector
-    for i in 0..clust_threshold.len() {
-        // Get position of threshold level where equal to threshold level
-        let mut thld_pos : Vec<usize> = Vec::new();
-        for j in 0..thld_vec.len() {
-            if thld_vec[j] == clust_threshold[i] {
-                thld_pos.push(j);
-            }
-        }
-
-        // Create array with x and y values
-        let mut arr: Array2<f32> = Array2::zeros((thld_pos.len(), 2));
-        for j in 0..thld_pos.len() {
-            arr[[j, 0]] = x_vec[thld_pos[j]] as f32;
-            arr[[j, 1]] = y_vec[thld_pos[j]] as f32;
-        }
+    // loop through clust_threshold vector
+    for threshold_vector in 0.._clust_threshold.len() {
+        // Cast _clust_threshold[threshold] to f32
+        let current_threshold = _clust_threshold[threshold_vector] as f32;
+        // Get xy of thresholded data
+        let _xy_data = thresholding(_data.clone(), current_threshold, _operator.clone());
+        // Create a local empty matrix
+        let mut _local_matrix = generate_matrix(data_x_dim, data_y_dim);
+        // Binary matrix
+        _local_matrix = fill_matrix(_local_matrix, _xy_data, 1);
+        // matrix_to_image
+        let _local_matrix = matrix_to_image(_local_matrix, data_x_dim, data_y_dim);
+        // find contours using function get_contours
+        let _contours = get_contours(_local_matrix, data_x_dim, data_y_dim);
+        println!("Contour: {:?}", _contours);
         
-        // Fit clustering
-        let clusters = clustering.fit(&arr).0;
+        
 
-        // Loop through clusters Hash and print
-        for (key, value) in clusters.iter() {
-            for j in 0..value.len() {
-                // Check if all values are different from 0
-                if x_vec[thld_pos[value[j]]] != 0.0 && y_vec[thld_pos[value[j]]] != 0.0 && val_vec[thld_pos[value[j]]] != 0.0 {
-                    // Increment 1 to key
-                    let cluster_id = key + 1;
-                    // Create new row
-                    let mut row : Vec<f32> = Vec::new();
-                    row.push(x_vec[thld_pos[value[j]]] as f32);
-                    row.push(y_vec[thld_pos[value[j]]] as f32);
-                    row.push(val_vec[thld_pos[value[j]]] as f32);
-                    row.push(i as f32);
-                    row.push(cluster_id as f32);
-                    output_matrix.push(row);
+
+
+    }
+}
+
+// Create function to threshold data
+pub fn thresholding(data : Vec<Vec<f32>>, clust_threshold : f32, operator : String) -> Vec<Vec<i32>>{
+
+    let mut x : Vec<i32> = Vec::new();
+    let mut y : Vec<i32> = Vec::new();
+
+    // loop through data vector
+    for j in 0..data.len() {
+        for k in 0..data[j].len() {
+            // Check operator equal to or greater than
+            if operator == ">=" {
+                if data[j][k] >= clust_threshold {
+                    // push x, y, threshold, and value into vector
+                    x.push(k as i32);
+                    y.push(j as i32);
+                }
+            // Check operator equal to or less than
+            } else if operator == "<=" {
+                if data[j][k] <= clust_threshold {
+                    // push x, y, threshold, and value into vector
+                    x.push(k as i32);
+                    y.push(j as i32);
+                }
+            // Check operator equal to greater
+            } else if operator == ">" {
+                if data[j][k] > clust_threshold {
+                    // push x, y, threshold, and value into vector
+                    x.push(k as i32);
+                    y.push(j as i32);
+                }
+            // Check operator equal to less
+            } else if operator == "<" {
+                if data[j][k] < clust_threshold {
+                    // push x, y, threshold, and value into vector
+                    x.push(k as i32);
+                    y.push(j as i32);
+                }
+            // Check operator equal to equal
+            } else if operator == "==" {
+                if data[j][k] == clust_threshold {
+                    // push x, y, threshold, and value into vector
+                    x.push(k as i32);
+                    y.push(j as i32);
                 }
             }
         }
     }
 
-    // Sort output_matrix array by last column
-    output_matrix.sort_by(|a, b| a[4].partial_cmp(&b[4]).unwrap());
+    // Concatenate into a vertical vector of i32
+    let thresholded_points = vec![x, y];
 
-    return output_matrix;
+    return thresholded_points;
+}
+
+
+// Create a function to generate empty matrix
+pub fn generate_matrix(data_x_dim : i32, data_y_dim : i32) -> Vec<Vec<i32>> {
+    // Create a matrix with x rows and y columns
+    let mut matrix : Vec<Vec<i32>> = Vec::new();
+    for _x in 0..data_x_dim {
+        let mut row : Vec<i32> = Vec::new();
+        for _y in 0..data_y_dim {
+            row.push(0);
+        }
+        matrix.push(row);
+    }
+    return matrix;
+}
+
+// Create a function to fill matrix
+pub fn fill_matrix(mut matrix : Vec<Vec<i32>>, xy_data : Vec<Vec<i32>>, value : i32) -> Vec<Vec<i32>> {
+    // loop through xy_data vector
+    for j in 0..xy_data[0].len() {
+        // Fill matrix with value
+        matrix[xy_data[0][j] as usize][xy_data[1][j] as usize] = value;
+    }
+    return matrix;
+}
+
+// Create a function to convert matrix to image
+pub fn matrix_to_image(_local_matrix : Vec<Vec<i32>>, data_x_dim : i32, data_y_dim : i32) -> image::ImageBuffer<image::Luma<u8>, Vec<u8>> {
+    
+    // Convert binary matrix to image type
+    let _local_matrix = image::ImageBuffer::from_fn(data_x_dim as u32, data_y_dim as u32, |x, y| {
+        let pixel = _local_matrix[x as usize][y as usize];
+        image::Luma([pixel as u8])
+    });
+
+    return _local_matrix;
+}
+
+// Create function to find countours
+pub fn get_contours(_local_matrix : image::ImageBuffer<image::Luma<u8>, Vec<u8>>, data_x_dim : i32, data_y_dim : i32) -> opencv::types::VectorOfVectorOfPoint {
+    // Reshape matrix to 2D vector
+    let _local_matrix = core::Mat::from_slice(&_local_matrix).unwrap();
+    let _local_matrix = _local_matrix.reshape(0, data_x_dim).unwrap();
+    let _local_matrix = _local_matrix.reshape(0, data_y_dim).unwrap();
+
+    // Countours variable to store Point vector
+    let mut _contours = opencv::types::VectorOfVectorOfPoint::new();
+
+    // Find contours of binary matrix
+    imgproc::find_contours(&_local_matrix, &mut _contours, imgproc::RETR_TREE, imgproc::CHAIN_APPROX_SIMPLE, core::Point::new(0, 0)).unwrap();
+
+    return _contours;
 }

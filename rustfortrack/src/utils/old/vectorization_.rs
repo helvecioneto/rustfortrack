@@ -33,7 +33,6 @@ pub fn vectorize(clusters : Vec<Vec<f32>>, clust_threshold: Vec<f32>, data_x_dim
 
         // Find contours in the image and store them in a variable
         let mut contours = opencv::types::VectorOfVectorOfPoint::new();
-        let mut hierarchy = opencv::types::VectorOfVec4i::new();
 
         // Convert img to use in find_contours function with dimensions data_x_dim and data_y_dim
         let img = core::Mat::from_slice(&img).unwrap();

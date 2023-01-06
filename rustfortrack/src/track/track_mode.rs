@@ -3,9 +3,9 @@ use chrono::NaiveDateTime;
 use crate::utils::files_list::files_list; // Import mod files_list from utils
 use crate::utils::files_timestamp::files_stamp; // Import mod files_timestamp from utils
 use crate::utils::read_bin::read_binary; // Import mod read_bin from utils
-use crate::utils::thresholding::threshold; // Import mod threshold from utils
+// use crate::utils::thresholding::threshold; // Import mod threshold from utils
 use crate::utils::clustering::cluster; // Import mod clustering from utils
-use crate::utils::vectorization::vectorize; // Import mod vectorization from utils
+// use crate::utils::vectorization::vectorize; // Import mod vectorization from utils
 
 
 pub fn track_mode(name_list_store: &HashMap<String, String>) {
@@ -59,15 +59,20 @@ pub fn track_mode(name_list_store: &HashMap<String, String>) {
         let data = read_binary(filtered_files[i].to_string(),
                                data_x_dim.to_string(),
                                data_y_dim.to_string());
-
-        // Call threshold function
-        let threshold_data = threshold(data, clust_threshold.clone(),operator.to_string());
+        
+        // // Call threshold function
+        // let threshold_data = threshold(data, clust_threshold.clone(),operator.to_string());
 
         // Call cluster function
-        let cluster_data = cluster(threshold_data, clust_threshold.clone(), clust_minsize.clone());
+        let _cluster = cluster(data,
+                               data_x_dim.to_string().parse::<i32>().unwrap(),
+                               data_y_dim.to_string().parse::<i32>().unwrap(),
+                               clust_threshold.clone(),
+                               clust_minsize.clone(),
+                               operator.to_string());
 
-        // Call vectorize function
-        vectorize(cluster_data, clust_threshold.clone(), data_x_dim.to_string().parse::<i32>().unwrap(), data_y_dim.to_string().parse::<i32>().unwrap());
+        // // Call vectorize function
+        // vectorize(cluster_data, clust_threshold.clone(), data_x_dim.to_string().parse::<i32>().unwrap(), data_y_dim.to_string().parse::<i32>().unwrap());
 
     }
 }
