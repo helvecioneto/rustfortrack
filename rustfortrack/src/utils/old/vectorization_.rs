@@ -138,3 +138,37 @@ fn normalize_matrix(matrix : Vec<Vec<i32>>) -> Vec<Vec<i32>> {
     }
     normalized_matrix
 }
+
+
+extern crate scoped_threadpool;
+use std::sync::Arc;
+use scoped_threadpool::Pool;
+
+fn main() {
+    let mut pool = Pool::new(4);
+    let mut results = Vec::new();
+
+    let results = Arc::new(results);
+
+    pool.scoped(|scope| {
+        // This closure will be executed in parallel by 4 worker threads.
+        for i in 0..8 {
+            let results = results.clone();
+
+            scope.execute(move || {
+                // This is the closure that will be executed in parallel.
+                // Call the function here and store the result in the results vector.
+                let result = my_function(i);
+                results.lock().unwrap().push(result);
+            });
+        }
+    });
+
+    // The results vector now contains the results of the function calls.
+    println!("Results: {:?}", *results);
+}
+
+fn my_function(i: i32) -> i32 {
+    // This is a dummy function that just returns the input value.
+    i
+}
