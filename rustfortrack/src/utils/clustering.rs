@@ -85,7 +85,13 @@ fn process_threshold(data : Vec<Vec<f32>>,
     let contours = get_contours(local_matrix, data_x_dim, data_y_dim);
     // Call coordinates to polygons
     let polygons = coords_to_polygon(contours);
-    println!("Polygons: {:?}", polygons);
+    // println!("Polygons: {:?}", polygons);
+    // loop through polygons and print
+    println!("\n\nThreshold: {}", clust_threshold);
+    for i in 0..polygons.len() {
+        println!("Polygon: {:?}", polygons[i]);
+    }
+
 
     return xy_data;
 }
