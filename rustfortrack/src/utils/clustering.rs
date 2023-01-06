@@ -9,71 +9,92 @@ use opencv::{
     imgproc,
     core,
 };
+use geo::{Point,LineString, Polygon};
 
 pub fn cluster(_data : Vec<Vec<f32>>, data_x_dim : i32, data_y_dim : i32, _clust_threshold: Vec<f32>, _clust_minsize : Vec<i32>, _operator : String) {
 
-    // Get _clust_threshold.len()
-    let _clust_threshold_len = _clust_threshold.len();
+    //////////////// Multithreaded version ////////////////
     // Create a pool of threads
-    let mut pool = Pool::new((_clust_threshold_len as usize).try_into().unwrap());
+    let mut pool = Pool::new((_clust_threshold.len() as usize).try_into().unwrap());
     // Create a vector to store the results
-    let mut results = Vec::<i32>::new();
+    let mut results = Vec::<Vec<Vec<i32>>>::new();
     let results = Arc::new(Mutex::new(results));
-
     // Pool scope
     pool.scoped(|scope| {
         // loop through clust_threshold vector
-        for threshold_vector in 0.._clust_threshold_len {
-            // Cast _clust_threshold[threshold] to f32
-            let current_threshold = _clust_threshold[threshold_vector] as i32;
-            // Clone the results vector
+        for threshold_vector in 0.._clust_threshold.len() {
+            // Make usable variables
+            let current_threshold = _clust_threshold[threshold_vector] as f32;
+            let data = _data.clone();
+            let _operator = _operator.clone();
+            let _clust_minsize = _clust_minsize.clone();
+            let data_x_dim = data_x_dim;
+            let data_y_dim = data_y_dim;
+                        
+            // Clone the results vector to store the results
             let results = results.clone();
             // Execute the function in a thread
             scope.execute(move || {
                 // Call the function here and store the result in the results vector.
-                let result = process_threshold(current_threshold);
+                let result = process_threshold(data, current_threshold, _operator, data_x_dim, data_y_dim);
                 let mut results = results.lock().unwrap();
                 results.push(result);
-
             });
         }
     });
-    println!("Results: {:?}", *results.lock().unwrap());
+    
+    // println!("Results: {:?}", *results.lock().unwrap());
 
+    // //////////////// Single threaded version ////////////////
     // // loop through clust_threshold vector
     // for threshold_vector in 0.._clust_threshold_len {
     //     // Cast _clust_threshold[threshold] to f32
     //     let current_threshold = _clust_threshold[threshold_vector] as f32;
-        // // Get xy of thresholded data
-        // let _xy_data = thresholding(_data.clone(), current_threshold, _operator.clone());
-        // // Create a local empty matrix
-        // let mut _local_matrix = generate_matrix(data_x_dim, data_y_dim);
-        // // Binary matrix
-        // _local_matrix = fill_matrix(_local_matrix, _xy_data, 1);
-        // // matrix_to_image
-        // let _local_matrix = matrix_to_image(_local_matrix, data_x_dim, data_y_dim);
-        // // find contours using function get_contours
-        // let _contours = get_contours(_local_matrix, data_x_dim, data_y_dim);
-        // // print threshold and countour length
-        // println!("Threshold: {}, Contour Length: {}", current_threshold, _contours.len());
-
+    //     // Get xy of thresholded data
+    //     let _xy_data = thresholding(_data.clone(), current_threshold, _operator.clone());
+    //     // Create a local empty matrix
+    //     let mut _local_matrix = generate_matrix(data_x_dim, data_y_dim);
+    //     // Binary matrix
+    //     _local_matrix = fill_matrix(_local_matrix, _xy_data, 1);
+    //     // matrix_to_image
+    //     let _local_matrix = matrix_to_image(_local_matrix, data_x_dim, data_y_dim);
+    //     // find contours using function get_contours
+    //     let _contours = get_contours(_local_matrix, data_x_dim, data_y_dim);
+    //     // print threshold and countour length
+    //     println!("Threshold: {}, Contour Length: {}", current_threshold, _contours.len());
     // }
+
 }
 
 
-fn process_threshold(i: i32) -> i32 {
-    // Create a vector to store the results
-    let mut results = Vec::<i32>::new();
-    // Push the result into the vector
-    results.push(i);
-    // Return the result
-    return i;
+fn process_threshold(data : Vec<Vec<f32>>,
+                     clust_threshold : f32,
+                     operator : String,
+                     data_x_dim : i32,
+                     data_y_dim : i32) -> Vec<Vec<i32>> {
+
+    // Call threshold function
+    let xy_data = thresholding(data, clust_threshold, operator);
+    // Call create a local empty matrix
+    let mut local_matrix = generate_matrix(data_x_dim, data_y_dim);
+    // Call binary matrix
+    local_matrix = fill_matrix(local_matrix, xy_data.clone(), 1);
+    // Call matrix_to_image
+    let local_matrix = matrix_to_image(local_matrix, data_x_dim, data_y_dim);
+    // Call find contours using function get_contours
+    let contours = get_contours(local_matrix, data_x_dim, data_y_dim);
+    // Call coordinates to polygons
+    let polygons = coords_to_polygon(contours);
+    println!("Polygons: {:?}", polygons);
+
+    return xy_data;
 }
 
 
 // Create function to threshold data
 fn thresholding(data : Vec<Vec<f32>>, clust_threshold : f32, operator : String) -> Vec<Vec<i32>>{
 
+    // empty vectors to store x and y coordinates
     let mut x : Vec<i32> = Vec::new();
     let mut y : Vec<i32> = Vec::new();
 
@@ -176,4 +197,35 @@ fn get_contours(_local_matrix : image::ImageBuffer<image::Luma<u8>, Vec<u8>>, da
     imgproc::find_contours(&_local_matrix, &mut _contours, imgproc::RETR_TREE, imgproc::CHAIN_APPROX_SIMPLE, core::Point::new(0, 0)).unwrap();
 
     return _contours;
+}
+
+// Create a function to transform in Polygon
+fn coords_to_polygon(contours : opencv::types::VectorOfVectorOfPoint) -> Vec<Polygon<i32>>{
+
+    // Create a vector to store the polygons type is Polygon
+    let mut polygons : Vec<Polygon<i32>> = Vec::new();
+
+    // Loop through contours
+    for i in 0..contours.len() {
+        let contour = contours.get(i).unwrap();
+        // Create a vector to store the contour points as vec! of tuples
+        let mut contour_vector : Vec<(i32, i32)> = Vec::new();
+
+        for j in 0..contour.len() {
+            let point = contour.get(j).unwrap();
+            let x = point.x;
+            let y = point.y;
+            contour_vector.push((x, y));
+        }
+
+        // Convert the vector of points into an iterator of Point objects.
+        let point_iter = contour_vector.into_iter().map(|(x, y)| Point::new(x, y));
+        // Create a LineString from the iterator of points.
+        let linestring = LineString::from_iter(point_iter);
+        // Create a Polygon from the LineString.
+        let polygon = Polygon::new(linestring, vec![]);
+        // Push the polygon into the vector
+        polygons.push(polygon);
+    }    
+    return polygons;
 }
